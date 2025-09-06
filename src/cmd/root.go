@@ -76,7 +76,9 @@ func init() {
 
 // initEnvConfig loads configuration from environment variables
 func initEnvConfig() {
-	fmt.Println(viper.AllSettings())
+    if viper.GetBool("app_debug") {
+        logrus.Debug("environment configuration loaded")
+    }
 	// Application settings
 	if envPort := viper.GetString("app_port"); envPort != "" {
 		config.AppPort = envPort

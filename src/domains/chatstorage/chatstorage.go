@@ -57,8 +57,24 @@ type MessageFilter struct {
 
 // ChatFilter represents query filters for chats
 type ChatFilter struct {
-	Limit      int
-	Offset     int
-	SearchName string
-	HasMedia   bool
+    Limit      int
+    Offset     int
+    SearchName string
+    HasMedia   bool
+}
+
+// Assignment represents a chat assignment to an admin user
+type Assignment struct {
+    ChatJID   string    `db:"chat_jid"`
+    UserID    int64     `db:"user_id"`
+    Status    string    `db:"status"`
+    CreatedAt time.Time `db:"created_at"`
+    UpdatedAt time.Time `db:"updated_at"`
+}
+
+// QueueItem represents an unassigned chat entry for queue views
+type QueueItem struct {
+    ChatJID          string    `db:"jid"`
+    Name             string    `db:"name"`
+    LastMessageTime  time.Time `db:"last_message_time"`
 }

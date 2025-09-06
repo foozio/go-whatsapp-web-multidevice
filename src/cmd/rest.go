@@ -1,24 +1,24 @@
 package cmd
 
 import (
-	"fmt"
-	"net/http"
-	"strings"
+    "fmt"
+    "net/http"
+    "strings"
 
-	"github.com/aldinokemal/go-whatsapp-web-multidevice/config"
-	"github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest"
-	"github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest/helpers"
-	"github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest/middleware"
-	"github.com/aldinokemal/go-whatsapp-web-multidevice/ui/websocket"
-	"github.com/dustin/go-humanize"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/basicauth"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/template/html/v2"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+    "github.com/aldinokemal/go-whatsapp-web-multidevice/config"
+    "github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest"
+    "github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest/helpers"
+    "github.com/aldinokemal/go-whatsapp-web-multidevice/ui/rest/middleware"
+    "github.com/aldinokemal/go-whatsapp-web-multidevice/ui/websocket"
+    "github.com/dustin/go-humanize"
+    "github.com/gofiber/fiber/v2"
+    "github.com/gofiber/fiber/v2/middleware/basicauth"
+    "github.com/gofiber/fiber/v2/middleware/cors"
+    "github.com/gofiber/fiber/v2/middleware/filesystem"
+    "github.com/gofiber/fiber/v2/middleware/logger"
+    "github.com/gofiber/template/html/v2"
+    "github.com/sirupsen/logrus"
+    "github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -33,15 +33,16 @@ func init() {
 	rootCmd.AddCommand(restCmd)
 }
 func restServer(_ *cobra.Command, _ []string) {
-	engine := html.NewFileSystem(http.FS(EmbedIndex), ".html")
+    // Use full views FS so we can render admin pages too
+    engine := html.NewFileSystem(http.FS(EmbedViews), ".html")
 	engine.AddFunc("isEnableBasicAuth", func(token any) bool {
 		return token != nil
 	})
-	app := fiber.New(fiber.Config{
-		Views:     engine,
-		BodyLimit: int(config.WhatsappSettingMaxVideoSize),
-		Network:   "tcp",
-	})
+    app := fiber.New(fiber.Config{
+        Views:     engine,
+        BodyLimit: int(config.WhatsappSettingMaxVideoSize),
+        Network:   "tcp",
+    })
 
 	app.Static(config.AppBasePath+"/statics", "./statics")
 	app.Use(config.AppBasePath+"/components", filesystem.New(filesystem.Config{
@@ -65,26 +66,26 @@ func restServer(_ *cobra.Command, _ []string) {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	if len(config.AppBasicAuthCredential) > 0 {
-		account := make(map[string]string)
-		for _, basicAuth := range config.AppBasicAuthCredential {
-			ba := strings.Split(basicAuth, ":")
-			if len(ba) != 2 {
-				logrus.Fatalln("Basic auth is not valid, please this following format <user>:<secret>")
-			}
-			account[ba[0]] = ba[1]
-		}
+    if len(config.AppBasicAuthCredential) > 0 {
+        account := make(map[string]string)
+        for _, basicAuth := range config.AppBasicAuthCredential {
+            ba := strings.Split(basicAuth, ":")
+            if len(ba) != 2 {
+                logrus.Fatalln("Basic auth is not valid, please this following format <user>:<secret>")
+            }
+            account[ba[0]] = ba[1]
+        }
 
-		app.Use(basicauth.New(basicauth.Config{
-			Users: account,
-		}))
-	}
+        app.Use(basicauth.New(basicauth.Config{
+            Users: account,
+        }))
+    }
 
-	// Create base path group or use app directly
-	var apiGroup fiber.Router = app
-	if config.AppBasePath != "" {
-		apiGroup = app.Group(config.AppBasePath)
-	}
+    // Create base path group or use app directly
+    var apiGroup fiber.Router = app
+    if config.AppBasePath != "" {
+        apiGroup = app.Group(config.AppBasePath)
+    }
 
 	// Rest
 	rest.InitRestApp(apiGroup, appUsecase)
@@ -106,15 +107,15 @@ func restServer(_ *cobra.Command, _ []string) {
 		})
 	})
 
-	websocket.RegisterRoutes(apiGroup, appUsecase)
-	go websocket.RunHub()
+    websocket.RegisterRoutes(apiGroup, appUsecase)
+    go websocket.RunHub()
 
 	// Set auto reconnect to whatsapp server after booting
 	go helpers.SetAutoConnectAfterBooting(appUsecase)
 	// Set auto reconnect checking
 	go helpers.SetAutoReconnectChecking(whatsappCli)
 
-	if err := app.Listen(":" + config.AppPort); err != nil {
-		logrus.Fatalln("Failed to start: ", err.Error())
-	}
+    if err := app.Listen(":" + config.AppPort); err != nil {
+        logrus.Fatalln("Failed to start: ", err.Error())
+    }
 }

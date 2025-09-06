@@ -19,6 +19,29 @@
     <title>WhatsApp API {{ .AppVersion }}</title>
 </head>
 <body>
+<header class="app-topbar">
+  <div class="topbar-left">
+    <img src="{{ .AppBasePath }}/assets/gowa.svg" alt="Logo" class="topbar-logo"/>
+    <nav class="breadcrumbs">
+      <a href="#sec-app">App</a>
+      <span>/</span>
+      <a href="#sec-send">Send</a>
+      <span>/</span>
+      <a href="#sec-message">Message</a>
+      <span>/</span>
+      <a href="#sec-group">Group</a>
+      <span>/</span>
+      <a href="#sec-newsletter">Newsletter</a>
+      <span>/</span>
+      <a href="#sec-account">Account</a>
+      <span>/</span>
+      <a href="#sec-chat">Chat Management</a>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <small class="version-chip">{{ .AppVersion }}</small>
+  </div>
+</header>
 <div id="splash-screen">
     <!-- Clean squircle logo without background wrapper -->
     <img src="{{ .AppBasePath }}/assets/gowa.svg" alt="GoWA Logo" class="splash-icon" id="main-logo">
@@ -35,9 +58,6 @@
                 
                 <span>WhatsApp API</span>
                 
-                <div class="version-label">
-                    {{ .AppVersion }}
-                </div>
             </div>
         </h1>
     </div>
@@ -52,6 +72,7 @@
         </p>
     </div>
 
+    <a id="sec-app"></a>
     <div class="ui horizontal divider">
         App
     </div>
@@ -63,6 +84,7 @@
         <app-login-with-code :connected="connected_devices"></app-login-with-code>
     </div>
 
+    <a id="sec-send"></a>
     <div class="ui horizontal divider">
         Send
     </div>
@@ -84,6 +106,7 @@
         <send-link></send-link>
     </div>
 
+    <a id="sec-message"></a>
     <div class="ui horizontal divider">
         Message
     </div>
@@ -96,6 +119,7 @@
         <message-read></message-read>
     </div>
 
+    <a id="sec-group"></a>
     <div class="ui horizontal divider">
         Group
     </div>
@@ -115,6 +139,7 @@
         <group-info></group-info>
     </div>
 
+    <a id="sec-newsletter"></a>
     <div class="ui horizontal divider">
         Newsletter
     </div>
@@ -123,6 +148,7 @@
         <newsletter-list></newsletter-list>
     </div>
 
+    <a id="sec-account"></a>
     <div class="ui horizontal divider">
         Account
     </div>
@@ -138,6 +164,7 @@
         <account-user-check></account-user-check>
     </div>
 
+    <a id="sec-chat"></a>
     <div class="ui horizontal divider">
         Chat Management
     </div>
@@ -337,5 +364,6 @@
         },
     }).mount('#app')
 </script>
+<script src="{{ .AppBasePath }}/assets/app-topbar.js"></script>
 </body>
 </html>

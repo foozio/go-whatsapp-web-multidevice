@@ -16,7 +16,7 @@ import (
 
 // SQLiteRepository implements Repository using SQLite
 type SQLiteRepository struct {
-	db *sql.DB
+    db *sql.DB
 }
 
 // NewSQLiteRepository creates a new SQLite repository
@@ -707,7 +707,7 @@ func (r *SQLiteRepository) InitializeSchema() error {
 	}
 
 	// Run migrations based on version
-	migrations := r.getMigrations()
+    migrations := r.getMigrations()
 	for i := version; i < len(migrations); i++ {
 		if err := r.runMigration(migrations[i], i+1); err != nil {
 			return fmt.Errorf("failed to run migration %d: %w", i+1, err)
@@ -763,7 +763,7 @@ func (r *SQLiteRepository) runMigration(migration string, version int) error {
 
 // getMigrations returns all database migrations
 func (r *SQLiteRepository) getMigrations() []string {
-	return []string{
+    return []string{
 		// Migration 1: Initial schema with only chats and messages tables
 		`
 		-- Create chats table
@@ -807,8 +807,92 @@ func (r *SQLiteRepository) getMigrations() []string {
 		`,
 
 		// Migration 2: Add index for message ID lookups (performance optimization)
-		`
-		CREATE INDEX IF NOT EXISTS idx_messages_id ON messages(id);
-		`,
-	}
+        `
+        CREATE INDEX IF NOT EXISTS idx_messages_id ON messages(id);
+        `,
+
+        // Migration 3: Assignments table for admin chat queue and ownership
+        `
+        CREATE TABLE IF NOT EXISTS chat_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_jid TEXT NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'open',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(chat_jid) REFERENCES chats(jid) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_assignments_user ON chat_assignments(user_id);
+        `,
+    }
+}
+
+// AssignChat upserts an assignment for a chat to a user
+func (r *SQLiteRepository) AssignChat(ctx context.Context, chatJID string, userID int64) error {
+    _, err := r.db.ExecContext(ctx, `
+        INSERT INTO chat_assignments (chat_jid, user_id, status, created_at, updated_at)
+        VALUES (?, ?, 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(chat_jid) DO UPDATE SET user_id = excluded.user_id, status='open', updated_at=CURRENT_TIMESTAMP
+    `, chatJID, userID)
+    return err
+}
+
+// UnassignChat removes the assignment for a chat
+func (r *SQLiteRepository) UnassignChat(ctx context.Context, chatJID string) error {
+    _, err := r.db.ExecContext(ctx, `DELETE FROM chat_assignments WHERE chat_jid = ?`, chatJID)
+    return err
+}
+
+// GetAssignments lists current assignments, optionally filtered by user
+func (r *SQLiteRepository) GetAssignments(ctx context.Context, userID *int64) ([]*domainChatStorage.Assignment, error) {
+    query := `SELECT chat_jid, user_id, status, created_at, updated_at FROM chat_assignments`
+    var args []any
+    if userID != nil {
+        query += ` WHERE user_id = ?`
+        args = append(args, *userID)
+    }
+    query += ` ORDER BY updated_at DESC`
+
+    rows, err := r.db.QueryContext(ctx, query, args...)
+    if err != nil { return nil, err }
+    defer rows.Close()
+
+    var list []*domainChatStorage.Assignment
+    for rows.Next() {
+        var a domainChatStorage.Assignment
+        if err := rows.Scan(&a.ChatJID, &a.UserID, &a.Status, &a.CreatedAt, &a.UpdatedAt); err != nil {
+            return nil, err
+        }
+        list = append(list, &a)
+    }
+    return list, rows.Err()
+}
+
+// GetQueueChats returns chats without assignments ordered by last_message_time
+func (r *SQLiteRepository) GetQueueChats(ctx context.Context, limit, offset int) ([]*domainChatStorage.QueueItem, error) {
+    if limit <= 0 { limit = 50 }
+    if limit > 200 { limit = 200 }
+    if offset < 0 { offset = 0 }
+
+    query := `
+        SELECT c.jid, c.name, c.last_message_time
+        FROM chats c
+        LEFT JOIN chat_assignments a ON a.chat_jid = c.jid
+        WHERE a.chat_jid IS NULL
+        ORDER BY c.last_message_time DESC
+        LIMIT ? OFFSET ?
+    `
+    rows, err := r.db.QueryContext(ctx, query, limit, offset)
+    if err != nil { return nil, err }
+    defer rows.Close()
+
+    var out []*domainChatStorage.QueueItem
+    for rows.Next() {
+        var qi domainChatStorage.QueueItem
+        if err := rows.Scan(&qi.ChatJID, &qi.Name, &qi.LastMessageTime); err != nil {
+            return nil, err
+        }
+        out = append(out, &qi)
+    }
+    return out, rows.Err()
 }

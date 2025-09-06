@@ -652,7 +652,7 @@ func handleWebhookForward(ctx context.Context, evt *events.Message) {
 		!strings.Contains(evt.Info.SourceString(), "broadcast") {
 		go func(evt *events.Message) {
 			if err := forwardMessageToWebhook(ctx, evt); err != nil {
-				logrus.Error("Failed forward to webhook: ", err)
+            logrus.WithError(err).Error("Failed to forward to webhook")
 			}
 		}(evt)
 	}

@@ -45,6 +45,8 @@ Download:
 
 - Send WhatsApp message via http API, [docs/openapi.yml](./docs/openapi.yaml) for more details
 - **MCP (Model Context Protocol) Server Support** - Integrate with AI agents and tools using standardized protocol
+- Notion-like UI refresh with sticky breadcrumbs topbar (smooth scroll + active highlight)
+- Print-friendly view (hides header/splash, removes shadows, light borders)
 - Mention someone
   - `@phoneNumber`
   - example: `Hello @628974812XXXX, @628974812XXXX`
@@ -432,6 +434,8 @@ You can fork or edit this source code !
   ![Success MCP](https://i.ibb.co/1fCx0Myc/mcpsuccess.png)
 
 ### HTTP REST API UI
+
+The UI includes a compact sticky topbar with breadcrumbs for quick navigation across sections. Breadcrumbs map to these anchors: `#sec-app`, `#sec-send`, `#sec-message`, `#sec-group`, `#sec-newsletter`, `#sec-account`, and `#sec-chat`. Navigating via links or hash loads will scroll with the proper offset for the fixed header; the active breadcrumb is highlighted while scrolling.
 
 | Description          | Image                                                         |
 |----------------------|---------------------------------------------------------------|

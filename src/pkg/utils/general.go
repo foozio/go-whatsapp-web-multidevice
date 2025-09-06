@@ -155,7 +155,7 @@ func GetMetaDataFromURL(urlStr string) (meta Metadata, err error) {
 	if meta.Image != "" {
 		imgURL, err := url.Parse(meta.Image)
 		if err != nil {
-			logrus.Warnf("Invalid image URL: %v", err)
+            logrus.WithError(err).Warn("Invalid image URL")
 		} else {
 			// Resolve relative URLs against the base URL
 			meta.Image = baseURL.ResolveReference(imgURL).String()
@@ -164,24 +164,24 @@ func GetMetaDataFromURL(urlStr string) (meta Metadata, err error) {
 		// Download the image
 		imgResponse, err := client.Get(meta.Image)
 		if err != nil {
-			logrus.Warnf("Failed to download image: %v", err)
+            logrus.WithError(err).Warn("Failed to download image")
 		} else {
 			defer imgResponse.Body.Close()
 
 			if imgResponse.StatusCode != http.StatusOK {
-				logrus.Warnf("Image download failed with status: %s", imgResponse.Status)
+                    logrus.WithField("status", imgResponse.Status).Warn("Image download failed")
 			} else {
 				// Check content type
 				contentType := imgResponse.Header.Get("Content-Type")
 				if !strings.HasPrefix(contentType, "image/") {
-					logrus.Warnf("URL returned non-image content type: %s", contentType)
+                    logrus.WithField("content_type", contentType).Warn("URL returned non-image content type")
 				} else {
 					// Read image data with size limit
 					imageData, err := io.ReadAll(io.LimitReader(imgResponse.Body, int64(config.WhatsappSettingMaxImageSize)))
 					if err != nil {
-						logrus.Warnf("Failed to read image data: %v", err)
+                        logrus.WithError(err).Warn("Failed to read image data")
 					} else if len(imageData) == 0 {
-						logrus.Warn("Downloaded image data is empty")
+                        logrus.Warn("Downloaded image data is empty")
 					} else {
 						meta.ImageThumb = imageData
 
@@ -189,7 +189,7 @@ func GetMetaDataFromURL(urlStr string) (meta Metadata, err error) {
 						imageReader := bytes.NewReader(imageData)
 						img, _, err := image.Decode(imageReader)
 						if err != nil {
-							logrus.Warnf("Failed to decode image: %v", err)
+                            logrus.WithError(err).Warn("Failed to decode image")
 						} else {
 							bounds := img.Bounds()
 							width := uint32(bounds.Max.X - bounds.Min.X)

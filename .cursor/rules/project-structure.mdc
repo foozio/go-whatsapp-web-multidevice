@@ -78,6 +78,8 @@ The application is organized using domain-driven design principles:
 
 - [src/views/](mdc:src/views) - Templates and UI components
   - [src/views/assets/](mdc:src/views/assets) - Frontend assets (CSS, JS, etc.)
+    - app.css — main stylesheet (Notion-like neutral theme, harmonized Semantic UI components)
+    - app-topbar.js — sticky header behavior with breadcrumbs, active section highlighting, and smooth scrolling with fixed-header offset
   - [src/views/components/](mdc:src/views/components) - Reusable UI components
     - [src/views/components/generic/](mdc:src/views/components/generic) - Generic UI components
 
@@ -91,6 +93,7 @@ The application is organized using domain-driven design principles:
 
 - [docker/](mdc:docker) - Docker-related files and configurations
   - [docker/golang.Dockerfile](mdc:docker/golang.Dockerfile) - Dockerfile for building the Go application
+  - docker-compose.yml maps `./src/storages:/app/storages` to persist SQLite databases across container restarts
 
 ## Key Application Features
 
@@ -102,6 +105,14 @@ The application is organized using domain-driven design principles:
 - Webhooks for message events
 - Auto-reply functionality
 - Model Context Protocol (MCP) server for AI agent communication
+
+## Frontend UI Notes
+
+- The main app UI includes a compact sticky topbar with breadcrumbs. Breadcrumbs map to anchors:
+  - `#sec-app`, `#sec-send`, `#sec-message`, `#sec-group`, `#sec-newsletter`, `#sec-account`, `#sec-chat`
+- The topbar collapses slightly on scroll and highlights the active section while scrolling.
+- On hash loads (e.g., visiting a URL with `#sec-…`), the page auto-adjusts the scroll to account for the fixed header.
+- A print view is provided for simplified exports (hides the topbar/splash, removes shadows, and uses light borders).
 
 ## Application Flow
 
@@ -124,3 +135,12 @@ The application is organized using domain-driven design principles:
 3. Model Context Protocol server is initialized for AI agent communication
 4. WhatsApp client services are made available through MCP protocol
 5. The MCP server listens for AI agent requests
+
+## Contributors
+
+- Nuzli L. Hernawan <nuzlilatief@gmail.com>
+- https://github.com/foozio
+
+## Changelog
+
+- 2025-09-06: Revamp the design to a Notion-like neutral theme; added sticky topbar with breadcrumbs and active highlighting; harmonized Semantic UI components; added print-friendly styles.

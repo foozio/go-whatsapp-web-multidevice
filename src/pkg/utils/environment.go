@@ -1,13 +1,12 @@
 package utils
 
 import (
-	"context"
-	"fmt"
-	"strconv"
-	"time"
+    "fmt"
+    "strconv"
+    "time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+    "github.com/sirupsen/logrus"
+    "github.com/spf13/viper"
 )
 
 // IsLocal will return true if the APP_ENV is not listed in those three condition
@@ -35,18 +34,16 @@ func Env[T any](key string, defValue ...T) T {
 // MustHaveEnv ensure the ENV is exists, otherwise will crashing the app
 func MustHaveEnv(key string) string {
 	env := viper.GetString(key)
-	if env == "" {
-		logrus.Warn(context.Background(), map[string]any{
-			"field": key,
-		}, "variable is not well set, reading from .env file")
-		viper.SetConfigFile(".env")
-		viper.SetConfigType("env")
-		err := viper.ReadInConfig()
-		if err != nil {
-			logrus.Fatal(err, "can't read .env file")
-		}
-		env = viper.GetString(key)
-	}
+    if env == "" {
+        logrus.WithField("field", key).Warn("variable is not well set, reading from .env file")
+        viper.SetConfigFile(".env")
+        viper.SetConfigType("env")
+        err := viper.ReadInConfig()
+        if err != nil {
+            logrus.WithError(err).Fatal("can't read .env file")
+        }
+        env = viper.GetString(key)
+    }
 	if env == "" {
 		logrus.Fatal(fmt.Sprintf("%s is not well set", key))
 	}

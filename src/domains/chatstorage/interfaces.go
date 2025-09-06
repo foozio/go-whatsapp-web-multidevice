@@ -37,5 +37,11 @@ type IChatStorageRepository interface {
 	TruncateAllDataWithLogging(logPrefix string) error
 
 	// Schema operations
-	InitializeSchema() error
+    InitializeSchema() error
+
+    // Assignments / Queue
+    AssignChat(ctx context.Context, chatJID string, userID int64) error
+    UnassignChat(ctx context.Context, chatJID string) error
+    GetAssignments(ctx context.Context, userID *int64) ([]*Assignment, error)
+    GetQueueChats(ctx context.Context, limit, offset int) ([]*QueueItem, error)
 }
